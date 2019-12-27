@@ -8,25 +8,33 @@ output: html_document
 
 ## PART 0: SETUP
 echo settings for embedding code
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 Setting Directory
-```{r dir}
+
+```r
 getwd()
+```
+
+```
+## [1] "C:/Dhruv/misc/data/R_5_Reproducible_Research/wk2_markdown_knitr"
+```
+
+```r
 setwd("C:/Dhruv/misc/data/R_5_Reproducible_Research/wk2_markdown_knitr")
 ```
 
 ## PART I: PREPROCESSING DATA
 Reading in step tracker csv:
-```{r data}
+
+```r
 step_tracker <- read.csv("activity.csv")
 ```
 
 Total daily steps:
 (missing values ommitted)
-```{r total daily steps}
+
+```r
 # loading up necessary packages
 
 # install.packages("lubridate", repos='http://cran.us.r-project.org')
@@ -35,35 +43,69 @@ library(ggplot2)
 library(knitr)
 
 str(step_tracker)
+```
 
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
+
+```r
 # converting date format for easier calculations
 step_tracker$date <- as.Date(step_tracker$date)
 
 # aggregating daily steps
 daily_aggregates <- na.omit(step_tracker)
 str(daily_aggregates)
+```
+
+```
+## 'data.frame':	15264 obs. of  3 variables:
+##  $ steps   : int  0 0 0 0 0 0 0 0 0 0 ...
+##  $ date    : Date, format: "2012-10-02" "2012-10-02" "2012-10-02" "2012-10-02" ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+##  - attr(*, "na.action")= 'omit' Named int  1 2 3 4 5 6 7 8 9 10 ...
+##   ..- attr(*, "names")= chr  "1" "2" "3" "4" ...
+```
+
+```r
 daily_aggregates <- aggregate(steps ~ date, daily_aggregates, FUN = sum)
 ```
 
 Plotting histogram of daily steps taken:
-```{r hist daily}
+
+```r
 # plotting histogram of daily aggregates
 daily_steps <- ggplot(daily_aggregates, aes(x = steps)) + geom_histogram()
 daily_steps
-
 ```
 
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![plot of chunk hist daily](figure/hist daily-1.png)
+
 Mean and median daily steps:
-```{r central tendency stats}
+
+```r
 # summarizing daily steps trends
 summary(daily_aggregates$steps)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##      41    8841   10765   10766   13294   21194
 ```
 Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  41    8841   10765   10766   13294   21194
 
 
 Time series data processing:
-```{r time series}
+
+```r
 # tracking total step trends over time
 time_series <- na.omit(step_tracker)
 
@@ -76,7 +118,8 @@ names(daily_averages)[2] <- "steps_mean"
 ```
 
 Preparing data for plotting
-```{r time series dataframe}
+
+```r
 # creating time series data frame
 time_series <- merge(time_series, daily_averages, by = 'date')
 
@@ -85,8 +128,11 @@ trend_lines <- ggplot(time_series, aes(x = date, y = steps_mean)) + geom_line()
 trend_lines
 ```
 
+![plot of chunk time series dataframe](figure/time series dataframe-1.png)
+
 Preparing data for identifying max mean interval
-```{r calculating max mean steps in a day}
+
+```r
 # subsetting to rows having highest number of average daily steps
 max <- time_series[time_series$steps_mean == max(time_series$steps_mean),]
 
@@ -104,16 +150,36 @@ max[max$steps == max(max$steps),]
 ## PART III: MISSING DATA & IMPUTATION
 
 Summarizing missing data
-```{r missing data}
+
+```r
 missing_values <- is.na(step_tracker$steps)
 sum(missing_values)
+```
 
+```
+## [1] 2304
+```
+
+```r
 # % missing values:
 sum(missing_values)/length(step_tracker$steps)
+```
+
+```
+## [1] 0.1311475
+```
+
+```r
 # 13 % of all steps values are missing
 
 sum(!complete.cases(step_tracker))
+```
 
+```
+## [1] 2304
+```
+
+```r
 incomplete_cases <- step_tracker[!complete.cases(step_tracker),]
 
 # 2304 rows out of 17568 cases contain missing values
@@ -131,8 +197,8 @@ However, since both the first and last day in our data have missing values for s
 We'll have to reverse whichever strategy we pick for the final data point.
 
 
-```{r imputing}
 
+```r
 unique_dates <- unique(step_tracker$date)
 
 steps_impute <- merge(daily_averages, step_tracker, by = 'date', all = TRUE)
@@ -166,8 +232,6 @@ for (i in 1:nrow(steps_impute)){
 
 # CREATING EQUAL DATASET WITH IMPUTED MISSING VALUES
 step_tracker.imp <- steps_impute[c(3,1,4)]
-
-
 ```
       
 
@@ -176,8 +240,8 @@ step_tracker.imp <- steps_impute[c(3,1,4)]
 
 Tabulating values from our new dataset to fill in missing values
 And produce more intelligible trends
-```{r hist w/ mean and median}
 
+```r
 hist(step_tracker.imp$steps, # histogram
  col = "peachpuff", # column color
  border = "black", 
@@ -199,13 +263,24 @@ abline(v = mean(step_tracker.imp$steps),
 abline(v = median(step_tracker.imp$steps),
  col = "red",
  lwd = 2)
+```
 
+![plot of chunk hist w/ mean and median](figure/hist w/ mean and median-1.png)
 
+```r
 mean_daily_steps <- aggregate(steps ~ date, step_tracker.imp, FUN = mean)
 
 avg_daily_steps <- ggplot(mean_daily_steps, aes(x = steps)) + geom_histogram()
 avg_daily_steps
+```
 
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![plot of chunk hist w/ mean and median](figure/hist w/ mean and median-2.png)
+
+```r
 # mean distribution looks almost identical
 # values on the x axis differ slightly
 
@@ -214,14 +289,22 @@ med_daily_steps <- aggregate(steps ~ date, step_tracker.imp, FUN = median)
 
 median_daily_steps <- ggplot(med_daily_steps, aes(x = steps)) + geom_histogram()
 median_daily_steps
+```
 
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
 
+![plot of chunk hist w/ mean and median](figure/hist w/ mean and median-3.png)
+
+```r
 # imputing increases the total number of daily steps
 ```
 
 ## PART IV: FACTORIZED PANELS
 
-```{r panel plots}
+
+```r
 # remember in lubridate, day(), day 1 = monday, day 7 = sunday
 
 steps_impute$day <- wday(steps_impute$date)
@@ -235,14 +318,15 @@ steps_impute$weekday <- as.factor(steps_impute$weekday)
 trend_lines_wday <- ggplot(steps_impute, aes(x = date, y = steps_mean)) + geom_line() +
                         facet_wrap(~weekday, ncol = 1)
 trend_lines_wday
-
-
 ```
+
+![plot of chunk panel plots](figure/panel plots-1.png)
 
 
 
 ## PART V: CONCLUSION
-```{r wrap up}
+
+```r
 #knitting results  
 
 # install.packages("markdown", repos='http://cran.us.r-project.org')
@@ -252,11 +336,31 @@ library(markdown)
 library(rmarkdown)
 
 
-knit("C:/Dhruv/misc/data/R_5_Reproducible_Research/wk2_markdown_knitr/PA1_template.Rmd",output="C:/Dhruv/misc/data/R_5_Reproducible_Research/wk2_markdown_knitr/PA1_template.html")
+knit("C:/Dhruv/misc/data/R_5_Reproducible_Research/wk2_markdown_knitr/PA1_template.Rmd",output="C:/Dhruv/misc/data/R_5_Reproducible_Research/wk2_markdown_knitr/PA1_template.html files.html")
+```
 
-knit("C:/Dhruv/misc/data/R_5_Reproducible_Research/wk2_markdown_knitr/PA1_template.Rmd",output="C:/Dhruv/misc/data/R_5_Reproducible_Research/wk2_markdown_knitr/PA1_template.md")
+```
+## 
+## 
+## processing file: C:/Dhruv/misc/data/R_5_Reproducible_Research/wk2_markdown_knitr/PA1_template.Rmd
+```
 
+```
+## Error in parse_block(g[-1], g[1], params.src): duplicate label 'setup'
+```
 
+```r
+knit("C:/Dhruv/misc/data/R_5_Reproducible_Research/wk2_markdown_knitr/PA1_template.Rmd",output="C:/Dhruv/misc/data/R_5_Reproducible_Research/wk2_markdown_knitr/PA1_template.html files.md")
+```
+
+```
+## 
+## 
+## processing file: C:/Dhruv/misc/data/R_5_Reproducible_Research/wk2_markdown_knitr/PA1_template.Rmd
+```
+
+```
+## Error in parse_block(g[-1], g[1], params.src): duplicate label 'setup'
 ```
 
 
